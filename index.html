@@ -6,13 +6,426 @@
   <title>数据清洗工具</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    h1 { margin-bottom: 24px; }
-    .section { margin-bottom: 20px; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+    .header p {
+      color: #666;
+      font-size: 15px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a1a2e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .icon {
+      font-size: 18px;
+    }
+
+    /* ===== 上传区域 ===== */
+    .upload-zone {
+      border: 2px dashed #d0d5dd;
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fafbfc;
+    }
+    .upload-zone:hover {
+      border-color: #4f46e5;
+      background: #f5f3ff;
+    }
+    .upload-zone.drag-over {
+      border-color: #4f46e5;
+      background: #ede9fe;
+      border-style: solid;
+    }
+    .upload-zone .upload-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .upload-zone .upload-text {
+      color: #666;
+      font-size: 14px;
+    }
+    .upload-zone .upload-hint {
+      color: #999;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    #fileInput { display: none; }
+
+    .file-info {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #166534;
+    }
+    .file-info.show { display: block; }
+
+    /* ===== 预览表格 ===== */
+    .table-wrap {
+      overflow-x: auto;
+      max-height: 320px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead { position: sticky; top: 0; z-index: 1; }
+    th {
+      background: #4f46e5;
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    td {
+      padding: 8px 14px;
+      border-bottom: 1px solid #f3f4f6;
+      white-space: nowrap;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tr:nth-child(even) td { background: #fafbfc; }
+    tr:hover td { background: #f5f3ff; }
+
+    .empty-state {
+      text-align: center;
+      color: #999;
+      padding: 40px 20px;
+      font-size: 14px;
+    }
+
+    /* ===== 操作按钮 ===== */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: #4338ca; }
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .btn-secondary:hover:not(:disabled) { background: #e5e7eb; }
+    .btn-success {
+      background: #059669;
+      color: #fff;
+    }
+    .btn-success:hover:not(:disabled) { background: #047857; }
+    .btn-warning {
+      background: #f59e0b;
+      color: #fff;
+    }
+    .btn-warning:hover:not(:disabled) { background: #d97706; }
+
+    /* ===== 统计 ===== */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 14px 8px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .btn-row { flex-direction: column; }
+      .btn { justify-content: center; }
+    }
   </style>
 </head>
 <body>
-  <h1>📊 数据清洗工具</h1>
-  <p>上传 CSV/TSV 文件 → 去空行 + 去重 → 下载清洗结果</p>
+  <div class="container">
+
+    <!-- 头部 -->
+    <div class="header">
+      <h1>📊 数据清洗工具</h1>
+      <p>上传 CSV / TSV → 去空行 + 去重 → 一键下载清洗结果</p>
+    </div>
+
+    <!-- 上传区域 -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📁</span> 上传文件</div>
+      <div class="upload-zone" id="uploadZone">
+        <span class="upload-icon">⬆️</span>
+        <span class="upload-text">拖拽文件到此处，或点击选择</span>
+        <span class="upload-hint">支持 .csv / .tsv / .txt 格式</span>
+      </div>
+      <input type="file" id="fileInput" accept=".csv,.tsv,.txt,.text/csv,.text/tab-separated-values">
+
+      <div class="file-info" id="fileInfo"></div>
+    </div>
+
+    <!-- 数据预览 -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> 数据预览</div>
+      <div class="table-wrap">
+        <div class="empty-state" id="emptyState">👆 请先上传文件查看数据</div>
+        <table id="dataTable" style="display: none;">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 清洗操作 -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🧹</span> 清洗操作</div>
+      <div class="btn-row">
+        <button class="btn btn-warning" id="btnRemoveEmpty" disabled>
+          🗑️ 去除空行
+        </button>
+        <button class="btn btn-secondary" id="btnRemoveDup" disabled>
+          🔄 去除重复行
+        </button>
+        <button class="btn btn-secondary" id="btnReset" disabled>
+          ↩️ 恢复原始数据
+        </button>
+      </div>
+
+      <!-- 统计 -->
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-value" id="statOriginal">0</div>
+          <div class="stat-label">原始行数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statCurrent">0</div>
+          <div class="stat-label">当前行数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statRemoved">0</div>
+          <div class="stat-label">已删除行</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statCols">0</div>
+          <div class="stat-label">列数</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 导出 -->
+    <div class="card">
+      <div class="card-title"><span class="icon">💾</span> 导出结果</div>
+      <button class="btn btn-success" id="btnExport" disabled>
+        ⬇️ 下载清洗后的 CSV
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // ========== DOM 引用 ==========
+    const fileInput  = document.getElementById('fileInput');
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInfo   = document.getElementById('fileInfo');
+    const dataTable  = document.getElementById('dataTable');
+    const tableHead  = document.getElementById('tableHead');
+    const tableBody  = document.getElementById('tableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    const btnRemoveEmpty = document.getElementById('btnRemoveEmpty');
+    const btnRemoveDup   = document.getElementById('btnRemoveDup');
+    const btnReset       = document.getElementById('btnReset');
+    const btnExport      = document.getElementById('btnExport');
+
+    const statOriginal = document.getElementById('statOriginal');
+    const statCurrent  = document.getElementById('statCurrent');
+    const statRemoved  = document.getElementById('statRemoved');
+    const statCols     = document.getElementById('statCols');
+
+    // ========== 状态 ==========
+    let originalData = [];   // 原始数据（二维数组）
+    let currentData  = [];   // 当前展示的数据
+
+    // ========== 上传区域交互 ==========
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('drag-over');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('drag-over');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    // ========== 文件处理 ==========
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        parseData(text, file.name);
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function parseData(text, fileName) {
+      // 自动识别分隔符：tab 优先，否则用逗号
+      const delimiter = text.includes('\t') ? '\t' : ',';
+      const lines = text.trim().split(/\r?\n/);
+
+      originalData = lines
+        .map(line => line.split(delimiter).map(cell => cell.trim()))
+        .filter(row => row.some(cell => cell !== ''));
+
+      currentData = originalData.map(row => [...row]);
+
+      // 更新文件信息
+      fileInfo.textContent = `✅ ${fileName} — ${currentData.length} 行数据已加载`;
+      fileInfo.classList.add('show');
+
+      // 渲染表格
+      renderTable();
+      updateStats();
+      enableButtons(true);
+    }
+
+    // ========== 表格渲染 ==========
+    function renderTable() {
+      if (currentData.length === 0) {
+        dataTable.style.display = 'none';
+        emptyState.style.display = '';
+        emptyState.textContent = '📭 没有数据可显示';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      dataTable.style.display = '';
+
+      // 表头
+      tableHead.innerHTML = '';
+      const headerRow = document.createElement('tr');
+      headerRow.innerHTML = '<th>#</th>' +
+        currentData[0].map((_, i) => `<th>列 ${i + 1}</th>`).join('');
+      tableHead.appendChild(headerRow);
+
+      // 表体
+      tableBody.innerHTML = currentData
+        .map((row, i) =>
+          '<tr>' +
+          `<td style="color:#999">${i + 1}</td>` +
+          row.map(cell => `<td>${escapeHtml(cell)}</td>`).join('') +
+          '</tr>'
+        )
+        .join('');
+    }
+
+    // ========== 统计更新 ==========
+    function updateStats() {
+      statOriginal.textContent = originalData.length;
+      statCurrent.textContent  = currentData.length;
+      statRemoved.textContent  = originalData.length - currentData.length;
+      statCols.textContent     = currentData.length > 0 ? currentData[0].length : 0;
+    }
+
+    // ========== 按钮控制 ==========
+    function enableButtons(enabled) {
+      btnRemoveEmpty.disabled = !enabled;
+      btnRemoveDup.disabled   = !enabled;
+      btnReset.disabled       = !enabled;
+      btnExport.disabled      = !enabled;
+    }
+
+    // ========== 工具函数 ==========
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    console.log('✅ 数据清洗工具 v1.0 — 基础页面已就绪');
+    console.log('   等待下一阶段实现：文件上传解析、清洗逻辑、导出功能');
+  </script>
 </body>
 </html>
